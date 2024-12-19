@@ -53,7 +53,7 @@ namespace polysolve::nonlinear
             }
             else if (solver_name == "DenseRegularizedProjectedNewton")
             {
-                return std::make_shared<RegularizedNewton>(false, true, solver_params, linear_solver_params, characteristic_length, logger);
+                return std::make_shared<RegularizedNewton>(false, PSDProjectionMethod::NONE, solver_params, linear_solver_params, characteristic_length, logger);
             }
 
             else if (solver_name == "Newton" || solver_name == "SparseNewton" || solver_name == "sparse_newton")
@@ -66,11 +66,11 @@ namespace polysolve::nonlinear
             }
             else if (solver_name == "RegularizedNewton")
             {
-                return std::make_shared<RegularizedNewton>(true, false, solver_params, linear_solver_params, characteristic_length, logger);
+                return std::make_shared<RegularizedNewton>(true, PSDProjectionMethod::NONE, solver_params, linear_solver_params, characteristic_length, logger);
             }
             else if (solver_name == "RegularizedProjectedNewton")
             {
-                return std::make_shared<RegularizedNewton>(true, true, solver_params, linear_solver_params, characteristic_length, logger);
+                return std::make_shared<RegularizedNewton>(true, PSDProjectionMethod::NONE, solver_params, linear_solver_params, characteristic_length, logger);
             }
 
             else if (solver_name == "LBFGS" || solver_name == "L-BFGS")

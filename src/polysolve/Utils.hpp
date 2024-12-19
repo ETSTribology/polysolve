@@ -9,6 +9,13 @@
 namespace polysolve
 {
 
+    /// @brief Enumeration of implemented PSD projection methods
+    enum class PSDProjectionMethod {
+        NONE = 0, ///< No projection
+        CLAMP = 1, ///< Clamp negative eigenvalues to zero
+        ABS = 2, ///< Take the absolute value of all eigenvalues
+    };
+
     struct Timing
     {
         operator double() const { return time; }
