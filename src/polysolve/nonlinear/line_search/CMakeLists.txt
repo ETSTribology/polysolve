@@ -9,6 +9,8 @@ set(SOURCES
 	NoLineSearch.hpp
 	RobustArmijo.cpp
 	RobustArmijo.hpp
+ 	MoreThuente.cpp
+  	MoreThuente.hpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" PREFIX "Source Files" FILES ${SOURCES})
