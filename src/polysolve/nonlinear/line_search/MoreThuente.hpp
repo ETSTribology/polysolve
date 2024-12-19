@@ -29,5 +29,6 @@ namespace polysolve::nonlinear::line_search
         double wolfe_c1;
         double wolfe_c2;
         int max_iterations;
+        double max_step_size;
     };
 } // namespace polysolve::nonlinear::line_search
