@@ -55,6 +55,7 @@ set(CMAKE_POLICY_DEFAULT_CMP0135 NEW) # Set the timestamps of all extracted cont
 ################################################################################
 
 project(PolySolve
+        VERSION 0.1.0
         DESCRIPTION "Easy-to-use wrapper for linear solver"
         LANGUAGES CXX)
 
@@ -297,13 +298,27 @@ endif()
 
 # cuSolver solvers
 if(POLYSOLVE_WITH_CUSOLVER)
-    include(cusolverdn)
-    if(TARGET CUDA::cusolver)
-        target_link_libraries(polysolve_linear PUBLIC CUDA::cusolver)
-        target_compile_definitions(polysolve_linear PUBLIC POLYSOLVE_WITH_CUSOLVER)
+    enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
+    if(NOT TARGET CUDA::cusolver)
+        message(WARNING "cuSOLVER not found - GPU solver disabled")
+        set(POLYSOLVE_WITH_CUSOLVER OFF)
     else()
-        message(WARNING "cuSOLVER not found, solver will not be available.")
-    endif()
+        include(cusolverdn)
+        if(TARGET CUDA::cusolver)
+            target_link_libraries(polysolve_linear PUBLIC CUDA::cusolver)
+            target_compile_definitions(polysolve_linear PUBLIC POLYSOLVE_WITH_CUSOLVER)
+            set(CMAKE_CUDA_ARCHITECTURES 75 86)
+            target_compile_options(polysolve_linear PRIVATE 
+                $<$<COMPILE_LANGUAGE:CUDA>: 
+                --use_fast_math 
+                --expt-relaxed-constexpr
+                >
+            )
+        else()
+            message(WARNING "cuSOLVER not found, solver will not be available.")
+        endif()  # <-- Added this missing endif
+    endif()  # <-- Properly close the outer else block
 endif()
 
 # Sanitizers
