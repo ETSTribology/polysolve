@@ -48,7 +48,9 @@ endif()
 
 # Check option for the threading layer
 if(MKL_THREADING STREQUAL "openmp")
-    message(FATAL_ERROR "openmp dependency not implemented yet")
+    find_package(OpenMP REQUIRED)
+    list(APPEND MKL_LINK_LIBRARIES OpenMP::OpenMP_CXX)
+    message(STATUS "Linking MKL with OpenMP threading")
 elseif(NOT MKL_THREADING IN_LIST MKL_THREADING_CHOICES)
     message(FATAL_ERROR "Unrecognized option for MKL_THREADING: ${MKL_THREADING}")
 endif()
@@ -193,6 +195,10 @@ function(mkl_add_imported_library name)
     )
     mkl_assert_is_found(${LIBVAR})
     message(STATUS "Creating target mkl::${name} for lib file: ${${LIBVAR}}")
+
+    if(MKL_THREADING STREQUAL "openmp")
+        target_link_libraries(mkl::${name} INTERFACE OpenMP::OpenMP_CXX)
+    endif()
 
     # Set imported location
     if(WIN32 AND NOT (MKL_LINKING STREQUAL static))
