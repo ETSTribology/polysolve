@@ -1,5 +1,3 @@
-# cuSolverDN solver
-
 if(TARGET CUDA::cusolver)
     return()
 endif()
@@ -11,46 +9,38 @@ check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
 
-    # We do not have a build recipe for this, so find it as a system installed library.
-    find_package(CUDAToolkit)
+    find_package(CUDAToolkit REQUIRED)
     if(CUDAToolkit_FOUND)
-        set(CUDA_SEPARABLE_COMPILATION ON)
-        set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -use_fast_math --expt-relaxed-constexpr  -gencode arch=compute_86,code=sm_86")
+        # Set CUDA architectures explicitly for target
+        set(CMAKE_CUDA_ARCHITECTURES "75" CACHE STRING "GPU compute capabilities (e.g., 75 for RTX8000)")
 
-        target_compile_options(polysolve PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+        # Add CUDA source files to specific target
+        target_sources(polysolve_linear PRIVATE src/polysolve/linear/CuSolverDN.cu)
 
-        --generate-line-info
-        --use_fast_math
-        --relocatable-device-code=true
-
-        --ptxas-options=-v
-        --maxrregcount=7
-        --compiler-options
-        -fPIC # https://stackoverflow.com/questions/5311515/gcc-fpic-option
-
-        >
-
+        # Configure target-specific CUDA properties
+        target_compile_options(polysolve_linear PRIVATE 
+            $<$<COMPILE_LANGUAGE:CUDA>: 
+            --use_fast_math 
+            --expt-relaxed-constexpr
+            >
         )
 
-        target_link_libraries(polysolve PUBLIC CUDA::toolkit)
-        set_target_properties(polysolve PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-        # Nvidia RTX8000 -> compute_75
-        # Nvidia V100 -> compute_70
-        # Nvidia 1080/1080Ti -> compute_61
-        # Nvidia 3080Ti -> compute_86
-        if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-            set(CMAKE_CUDA_ARCHITECTURES 70 75 86)
-        endif()
-        set_target_properties(polysolve PROPERTIES CUDA_ARCHITECTURES "70;75;86")
+        # Link CUDA libraries to linear solver only
+        target_link_libraries(polysolve_linear PRIVATE 
+            CUDA::cusolver
+            CUDA::cudart
+        )
 
-        if(APPLE)
-            # We need to add the path to the driver (libcuda.dylib) as an rpath,
-            # so that the static cuda runtime can find it at runtime.
-            set_property(TARGET polysolve
-                        PROPERTY
-                        BUILD_RPATH ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-        endif()
+        # Set properties for separable compilation
+        set_target_properties(polysolve_linear PROPERTIES
+            CUDA_SEPARABLE_COMPILATION ON
+            CUDA_RESOLVE_DEVICE_SYMBOLS ON
+        )
+
+        # Add CUDA include directories
+        target_include_directories(polysolve_linear SYSTEM PRIVATE
+            ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+        )
 
     else()
         message(WARNING "cuSOLVER not found, solver will not be available.")
